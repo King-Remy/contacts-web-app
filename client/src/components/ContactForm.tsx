@@ -1,12 +1,9 @@
 import { ChangeEvent, useState  } from "react";
 import { Button, Form } from "react-bootstrap";
+import { Contact } from "../types";
+import { v4 as uuid } from 'uuid'
+import { API_SERVER } from "../config/constant"
 
-export interface Contact {
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    address: string
-}
 
 export default function ContatForm () {
 
@@ -18,21 +15,61 @@ export default function ContatForm () {
     });
 
     const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
         setContact((contact) => {
             return {
                 ...contact,
-                [name]: value
+                [e.target.name]: e.target.value
             };
         });
     };
 
-    // const handleSubmit: FormEventHandler<HTMLInputElement> = () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            // prepare the data to send
+            const data = {
+                contact_id: uuid(),
+                first_name: contact.firstName,
+                last_name: contact.lastName,
+                phone_number: contact.phoneNumber,
+                address: contact.address
+            };
+            console.log(JSON.stringify(data))
+            const response = await fetch(`${API_SERVER}/contact/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
 
-    // }
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            };
+
+            const result = await response.json();
+            if (result.success) {
+                // Handle successful registration
+                alert("Contact added successfully!");
+                // Reset form
+                setContact({
+                    firstName: '',
+                    lastName: '',
+                    phoneNumber: '',
+                    address: '',
+                });
+            } else {
+                alert("Failed to add contact: " + result.msg);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while adding the contact");
+        }
+        }
+    
 
     return(
-        <Form>
+        <Form onSubmit={handleSubmit}>
             <h3 className="mb-3">Add New Contact</h3>
             <Form.Group controlId="firstName">
                 <Form.Label>First Name</Form.Label>
@@ -42,6 +79,7 @@ export default function ContatForm () {
                     type="text"
                     placeholder="Enter first name"
                     onChange={handleOnChange}
+                    // style={showError.firstName && {borderColor: "rgb(206,76, 76)"} }
                     />
             </Form.Group>
             <Form.Group controlId="lastName">
