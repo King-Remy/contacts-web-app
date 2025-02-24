@@ -8,6 +8,7 @@ import { API_SERVER } from "../config/constant"
 export default function ContatForm () {
 
     const [ contact, setContact] = useState<Contact>({
+        contact_id: '',
         firstName: '',
         lastName: '',
         phoneNumber: '',
@@ -53,6 +54,7 @@ export default function ContatForm () {
                 alert("Contact added successfully!");
                 // Reset form
                 setContact({
+                    contact_id: '',
                     firstName: '',
                     lastName: '',
                     phoneNumber: '',
