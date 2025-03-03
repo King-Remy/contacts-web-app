@@ -1,4 +1,4 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
 import os
 import json
@@ -77,24 +77,36 @@ def register_contact():
     new_contact.save()
 
     return {"success": True,
-                "userID": new_contact.phone_number,
+                "userID": new_contact.contact_id,
                 "msg": "The contact was successfully registered"}, 200
+
+
+@app.route('/contact/<start>/<end>', methods=['GET'])
+def get_paginated_contacts(start, end):
+    # Retrieve contact data
+    with database.Session() as session:
+        saved_contacts = [m.serialize() for m in session.query(database.Contact).filter(database.Contact.deleted!=1).order_by(database.Contact.id.desc()).slice(int(start),int(end)).all()]
+        print(f"These are the models:{saved_contacts}")
+        count = session.query(database.Contact).filter(database.Contact.deleted!=1).count()
+
+    return jsonify({"contacts":saved_contacts, "count":count}) 
+
 
 @app.route("/contact/edit", methods=['POST'])
 def update_contact():
 
     req_data = request.get_json()
 
-    _contact_id = req_data.get("")
-    _new_firstname = req_data.get("")
-    _new_lastname = req_data.get("")
-    _new_phone_number = req_data.get("")
-    _new_address = req_data.get("")
+    _contact_id = req_data.get("contact_id")
+    _new_firstname = req_data.get("first_name")
+    _new_lastname = req_data.get("last_name")
+    _new_phone_number = req_data.get("phone_number")
+    _new_address = req_data.get("address")
     
     with database.Session() as session:
-        contact = session.qury(database.Contact).fliter(database.Contact.contact_id == _contact_id).all()[0]
+        contact = session.query(database.Contact).filter(database.Contact.contact_id == _contact_id).all()[0]
         if contact.contact_id != _contact_id:
-            abort(403)
+            return {"success": False, "msg": "Contact not found"}, 404
 
         if _new_firstname:
             contact.first_name = _new_firstname
@@ -108,4 +120,6 @@ def update_contact():
         if _new_address:
             contact.address = _new_address
 
-    return {"success": True}, 200
+        session.commit()
+
+    return {"success": True, "msg": "Contact updated successfully"}, 200

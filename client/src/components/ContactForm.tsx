@@ -1,20 +1,39 @@
-import { ChangeEvent, useState  } from "react";
+import { ChangeEvent, useEffect, useState  } from "react";
 import { Button, Form } from "react-bootstrap";
 import { Contact } from "../types";
 import { v4 as uuid } from 'uuid'
 import { API_SERVER } from "../config/constant"
 
+interface ContactFormProps {
+    showModal: boolean;
+    contactToEdit?: Contact | null;
+    onEditSuccess?: () => void;
+}
 
-export default function ContatForm () {
+export default function ContactForm ({showModal, contactToEdit, onEditSuccess}: ContactFormProps) {
 
     const [ contact, setContact] = useState<Contact>({
-        contact_id: '',
+        contact_id: uuid(),
         firstName: '',
         lastName: '',
         phoneNumber: '',
         address: '',
     });
 
+    // Populate form when editing a contact
+    useEffect(() => {
+        if (contactToEdit) {
+            // Only set the contact if contactToEdit is not null or undefined
+            setContact({
+                contact_id: contactToEdit.contact_id,
+                firstName: contactToEdit.firstName,
+                lastName: contactToEdit.lastName,
+                phoneNumber: contactToEdit.phoneNumber,
+                address: contactToEdit.address,
+            });
+        }
+    }, [contactToEdit]);
+    
     const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
         setContact((contact) => {
             return {
@@ -29,14 +48,17 @@ export default function ContatForm () {
         try {
             // prepare the data to send
             const data = {
-                contact_id: uuid(),
+                contact_id: contact.contact_id,
                 first_name: contact.firstName,
                 last_name: contact.lastName,
                 phone_number: contact.phoneNumber,
                 address: contact.address
             };
             console.log(JSON.stringify(data))
-            const response = await fetch(`${API_SERVER}/contact/register`, {
+
+            const endpoint = !showModal ? `${API_SERVER}/contact/register` : `${API_SERVER}/contact/edit`
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -51,28 +73,34 @@ export default function ContatForm () {
             const result = await response.json();
             if (result.success) {
                 // Handle successful registration
-                alert("Contact added successfully!");
-                // Reset form
-                setContact({
-                    contact_id: '',
-                    firstName: '',
-                    lastName: '',
-                    phoneNumber: '',
-                    address: '',
-                });
+                alert(showModal ? "Contact updated successfully!" : "Contact added successfully!");
+                // Reset form or close modal
+                if (showModal && onEditSuccess) {
+                    onEditSuccess();
+                } else {
+                    // Reset form for new contact
+                    setContact({
+                        contact_id: '',
+                        firstName: '',
+                        lastName: '',
+                        phoneNumber: '',
+                        address: '',
+                    });
+                }
+                
             } else {
-                alert("Failed to add contact: " + result.msg);
+                alert(`Failed to ${showModal ? "update" : "add"} contact: ${result.msg}`);
             }
         } catch (error) {
             console.error("Error:", error);
-            alert("An error occurred while adding the contact");
+            alert(`An error occurred while ${showModal ? "updating" : "adding"} the contact`);
         }
         }
     
 
     return(
-        <Form onSubmit={handleSubmit}>
-            <h3 className="mb-3">Add New Contact</h3>
+        <Form onSubmit={handleSubmit} className="contact-form">
+            <h3 className="mb-3">{`${showModal ? "Update Contact" :"Add New Contact"}`}</h3>
             <Form.Group controlId="firstName">
                 <Form.Label>First Name</Form.Label>
                 <Form.Control
@@ -116,7 +144,7 @@ export default function ContatForm () {
             </Form.Group>
             <div className="d-flex justify-content-end">
                 <Button variant="primary" type="submit" className="submit-btn">
-                    Add Contact
+                    {`${showModal ? "Update Contact" : "Add Contact" }`}
                 </Button>
             </div>
         </Form>

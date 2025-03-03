@@ -5,7 +5,7 @@ import { Contact, RawContact } from '../types';
 import ContactItem from './ContactItem';
 
 interface ContactListProps {
-    onEdit: () => void;
+    onEdit: (contact: Contact) => void;
   }
 
 export default function ContactList({ onEdit }: ContactListProps) {
@@ -24,7 +24,7 @@ export default function ContactList({ onEdit }: ContactListProps) {
     { id: 'delete', label: 'Delete' }
   ];
 
-  useEffect(() => {
+  const fetchContacts = () => {
     fetch(`${API_SERVER}/contact/${page * rowsPerPage}/${page * rowsPerPage + rowsPerPage}`)
       .then(response => response.json())
       .then(json => {
@@ -41,6 +41,10 @@ export default function ContactList({ onEdit }: ContactListProps) {
         setCount(json.count);
       })
       .catch(error => console.error('Error:', error));
+  };
+
+  useEffect(() => {
+    fetchContacts();
   }, [page, rowsPerPage, deleted]);
 
   useEffect(() => {
@@ -59,9 +63,9 @@ export default function ContactList({ onEdit }: ContactListProps) {
     }
   }, [deleted, contacts]);
 
-//   const handleDelete = () => {
-//     setDeleted(selected.join('.'));
-//   };
+  const handleDelete = (contactId: string) => {
+    setDeleted(contactId);
+  };
 
   const totalPages = Math.ceil(count / rowsPerPage);
 
@@ -100,7 +104,8 @@ export default function ContactList({ onEdit }: ContactListProps) {
                 <ContactItem
                 key={contact.contact_id}
                 {...contact}
-                onEdit={onEdit}
+                onEdit={() => onEdit(contact)}
+                onDelete={() => handleDelete(contact.contact_id)}
                 />
             ))}
             </tbody>

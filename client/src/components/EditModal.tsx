@@ -1,69 +1,38 @@
 import { ChangeEvent, useState } from "react";
 import { v4 as uuid } from "uuid";
 import { Contact } from "../types";
+import ContactForm from './ContactForm';
+import { Button } from "react-bootstrap";
+import { AiFillDelete } from "react-icons/ai";
 
 interface ModalProps {
+  showModal: boolean;
   onClose: () => void;
+  contactToEdit: Contact | null;
 //   onSave: () => void;
 }
 
-export default function Modal({
-  onClose: handleClose,
+export default function EditModal({
+    showModal,
+    onClose: handleClose,
+    contactToEdit
 //   onSave: handleSave,
 }: ModalProps) {
-  const [ contact, setContact] = useState<Contact>({
-          contact_id: '',
-          firstName: '',
-          lastName: '',
-          phoneNumber: '',
-          address: '',
-      });
 
-    const handleOnChange = (e: ChangeEvent<HTMLInputElement>) => {
-            setContact((contact) => {
-                return {
-                    ...contact,
-                    [e.target.name]: e.target.value
-                };
-            });
-        };
 
-  const updateContact = () => {
-    setContact({
-        contact_id: '',
-        firstName: '',
-        lastName: '',
-        phoneNumber: '',
-        address: '',
-    })
-  };
 
   return (
-    <div className="backdrop">
-      <div className="modal">
-        <input
-          placeholder="First name"
-          value={contact.firstName}
-          onChange={handleOnChange}
-        />
-        <input
-          placeholder="Last name"
-          value={contact.lastName}
-          onChange={handleOnChange}
-        />
-        <input
-          placeholder="Phone number"
-          value={contact.phoneNumber}
-          onChange={handleOnChange}
-        />
-        <input
-          placeholder="Address"
-          value={contact.address}
-          onChange={handleOnChange}
-        />
-        <button onClick={updateContact}>Save</button>
-        <button onClick={handleClose}>Close</button>
+    <div
+    className={`${"modal"} ${showModal ? "display-block" : "display-none"}`}
+  >
+    <div className="modal-main">
+      <ContactForm showModal={showModal} contactToEdit={contactToEdit} onEditSuccess={handleClose} />
+      <div className="btn-container">
+      <Button onClick={handleClose}>
+          <AiFillDelete size={20} color='red' className='icon' />
+      </Button>
       </div>
     </div>
+  </div>
   );
 }
