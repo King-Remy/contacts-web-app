@@ -30,7 +30,7 @@ export default function ContactList({ onEdit }: ContactListProps) {
       .then(json => {
         // Transform each contact object to have the desired key names.
         const transformedContacts = json.contacts.map((contact: RawContact) => ({
-          contact_id: contact.contact_id,             // mapping backend "id" to "contact_id"
+          contact_id: contact.id,             // mapping backend "id" to "contact_id"
           firstName: contact.first_name,        // mapping "first_name" to "firstName"
           lastName: contact.last_name,          // mapping "last_name" to "lastName"
           phoneNumber: contact.phone_number,    // mapping "phone_number" to "phoneNumber"

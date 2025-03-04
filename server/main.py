@@ -86,7 +86,7 @@ def get_paginated_contacts(start, end):
     # Retrieve contact data
     with database.Session() as session:
         saved_contacts = [m.serialize() for m in session.query(database.Contact).filter(database.Contact.deleted!=1).order_by(database.Contact.id.desc()).slice(int(start),int(end)).all()]
-        print(f"These are the models:{saved_contacts}")
+        
         count = session.query(database.Contact).filter(database.Contact.deleted!=1).count()
 
     return jsonify({"contacts":saved_contacts, "count":count}) 
@@ -123,3 +123,15 @@ def update_contact():
         session.commit()
 
     return {"success": True, "msg": "Contact updated successfully"}, 200
+
+@app.route('/contact/delete/<id>', methods=['POST'])
+def delete(id):
+    ids = [int(i) for i in id.split('.')]
+    with database.Session() as session:
+        _models = session.query(database.Contact).filter(database.Contact.id.in_(ids)).all()
+        if set(m.id for m in _models) != {ids[0]}:
+            return {"success": False, "msg": "Contact not found"}, 404
+        for model in _models:
+            model.deleted = 1
+        session.commit()
+    return jsonify({"status":"success", "id":id})
